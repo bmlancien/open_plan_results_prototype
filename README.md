@@ -3,6 +3,8 @@
 Static prototype of the new results page, built 1:1 from the canvas design, with placeholder
 data. Pick what you need and move it into the app.
 
+**Live:** https://bmlancien.github.io/open_plan_results_prototype/ ([single](https://bmlancien.github.io/open_plan_results_prototype/single.html) · [compare](https://bmlancien.github.io/open_plan_results_prototype/compare.html))
+
 Open `single.html` or `compare.html` in a browser. No build step, no libraries (only the Lato
 font from Google Fonts).
 
