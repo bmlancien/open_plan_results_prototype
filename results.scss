@@ -1,0 +1,1908 @@
+// open_plan – results page (single scenario + comparison)
+// Plain SCSS, BEM, one block per part (r- = results). Markup: single.html, compare.html.
+// Values come from the canvas design; colours are the app's (abstracts/_variables.scss).
+//
+// In the app: main.css is loaded before Bootstrap and forces a { color: #1F567D !important;
+// font-weight: 700 }. Links that need another look here (.r-bar__view-link, .r-bar__tab,
+// .r-same__link …) then need !important on color / font-weight.
+
+// ---------- variables ----------
+$r-primary: #1F567D;          // $primary-color-1
+$r-primary-dark: #17405C;     // $primary-color-1-dark
+$r-text: #343434;             // $primary-color-2
+$r-gray-1: #F4F7F9;           // $primary-gray-color-1
+$r-gray-2: #E3EAEE;           // $primary-gray-color-2
+$r-gray-3: #A8B5C0;           // $primary-gray-color-3
+$r-gray-4: #495965;           // $primary-gray-color-4
+$r-border: #D6D6D6;           // $secondary-gray-color-2
+$r-white: #fff;
+$r-accent-bg: #E6F0F8;        // light blue (download button, hint, reference column)
+$r-ref-bg: #F3F7FC;           // selected option, reference cells
+$r-row-bg: #F9FBFC;           // group rows of the comparison table
+$r-line: #F0F3F6;             // separators inside charts
+$r-good: #13825F;             // $success-color-text
+$r-good-bg: #DFF2E9;
+$r-warning-bg: #FFF3D4;       // $warning-bg-color
+$r-warning-border: #E9CF85;
+$r-warning-text: #825F08;     // $warning-text-color
+$r-shadow-card: 0 0 16px rgba(31, 86, 125, 0.08);
+$r-shadow-menu: 0 12px 32px rgba(31, 86, 125, 0.16);
+$r-max-width: 1312px;
+$r-side: 64px;
+
+// ---------- page base (the app already has its own; only for the prototype pages) ----------
+.r-page {
+  min-height: 100vh;
+  background: $r-gray-1;
+  color: $r-text;
+  font-family: Lato, Arial, Helvetica, sans-serif;
+
+  button,
+  input,
+  select {
+    font-family: inherit;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid $r-primary;
+    outline-offset: 2px;
+  }
+}
+
+.r-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.r-chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+[aria-expanded="true"] > .r-chevron {
+  transform: rotate(90deg);
+}
+
+// ==========================================================================================
+// HEADER: notice, project title, filter bar (full and pinned)
+// ==========================================================================================
+
+.r-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px $r-side;
+  border-top: 1px solid #F2DC9B;
+  border-bottom: 1px solid #F2DC9B;
+  background: $r-warning-bg;
+  color: $r-warning-text;
+  font-size: 14px;
+
+  &__link {
+    color: $r-warning-text;
+    font-weight: 700;
+  }
+
+  &__dismiss {
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid $r-warning-border;
+    border-radius: 6px;
+    background: $r-white;
+    color: $r-warning-text;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
+.r-title {
+  background: $r-white;
+
+  &__inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: $r-max-width;
+    margin: 0 auto;
+    padding: 22px $r-side 0;
+  }
+
+  &__label {
+    color: $r-gray-4;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  &__toggle {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 8px 2px 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: $r-text;
+    font-size: 25px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+
+    svg {
+      color: $r-primary;
+    }
+  }
+}
+
+.r-bar {
+  position: relative;
+  z-index: 5;
+  background: $r-white;
+
+  &__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    column-gap: 16px;
+    row-gap: 14px;
+    max-width: $r-max-width;
+    margin: 0 auto;
+    padding: 16px $r-side 0;
+  }
+
+  &__field {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__label {
+    color: $r-gray-4;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  // scenario field (opens a listbox)
+  &__select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 420px;
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid $r-border;
+    border-radius: 8px;
+    background: $r-white;
+    color: $r-text;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+
+    &[aria-expanded="true"] {
+      background: $r-ref-bg;
+    }
+
+    svg {
+      flex-shrink: 0;
+      color: $r-gray-4;
+    }
+  }
+
+  &__select-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+
+    span {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // single / comparison: two links styled as a switch
+  &__view {
+    display: flex;
+    height: 44px;
+    border: 1px solid $r-border;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__view-link {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: $r-white;
+    color: $r-gray-4;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    & + & {
+      border-left: 1px solid $r-border;
+    }
+
+    &[aria-current="page"] {
+      background: $r-primary;
+      color: $r-white;
+    }
+  }
+
+  &__export {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  &__export-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    background: $r-accent-bg;
+    color: $r-primary-dark;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.03rem;
+    cursor: pointer;
+  }
+
+  // section tabs
+  &__nav {
+    flex: 1 0 100%;
+    align-self: stretch;
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  &__tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  &__tab {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 14px;
+    border-bottom: 3px solid transparent;
+    color: $r-gray-4;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &[aria-current="location"] {
+      border-bottom-color: $r-primary;
+      color: $r-text;
+    }
+  }
+
+  // pinned: one row, smaller controls, short labels
+  &--compact {
+    box-shadow: 0 4px 16px rgba(31, 86, 125, 0.12);
+  }
+
+  &--compact &__inner {
+    align-items: center;
+    row-gap: 0;
+    padding: 0 $r-side;
+  }
+
+  &--compact &__select {
+    width: 300px;
+    height: 36px;
+  }
+
+  &--compact &__view {
+    height: 36px;
+  }
+
+  &--compact &__view-link {
+    padding: 0 12px;
+  }
+
+  &--compact &__export {
+    order: 2;
+  }
+
+  &--compact &__export-btn {
+    height: 36px;
+    padding: 0 10px;
+  }
+
+  &--compact &__nav {
+    order: 1;
+    flex: 1 1 auto;
+    margin-left: 8px;
+  }
+
+  &--compact &__tab {
+    height: 52px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+}
+
+// pinned bar container (shown by results.js once the full bar has scrolled away).
+// In the app set --r-pinned-top to the navbar height.
+.r-pinned {
+  position: fixed;
+  top: var(--r-pinned-top, 0);
+  left: 0;
+  right: 0;
+  z-index: 20;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+// ---------- dropdown menus and listboxes ----------
+.r-menu {
+  position: absolute;
+  z-index: 10;
+  padding: 6px;
+  border: 1px solid $r-gray-2;
+  border-radius: 8px;
+  background: $r-white;
+  box-shadow: $r-shadow-menu;
+
+  &--project {
+    top: 86px;
+    left: $r-side;
+    width: 420px;
+  }
+
+  &--scenario {
+    top: calc(100% + 6px);
+    left: 0;
+    width: 420px;
+  }
+
+  &--export {
+    top: calc(100% + 6px);
+    right: 0;
+    width: 340px;
+  }
+
+  &--add {
+    top: 52px;
+    right: 16px;
+    width: 340px;
+  }
+
+  &--card {
+    top: 52px;
+    right: 16px;
+    width: 230px;
+  }
+
+  &--item {
+    top: 40px;
+    right: 0;
+    width: 230px;
+  }
+
+  &__head {
+    padding: 6px 10px 8px;
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+
+  &__foot {
+    margin: 6px 4px 2px;
+    padding-top: 8px;
+    border-top: 1px solid $r-gray-2;
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: $r-white;
+    color: $r-text;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+
+    &[aria-selected="true"] {
+      background: $r-ref-bg;
+      font-weight: 700;
+    }
+  }
+
+  &__grow {
+    flex-grow: 1;
+  }
+
+  &__meta {
+    color: $r-gray-4;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  &__check {
+    display: flex;
+    color: $r-primary;
+  }
+
+  // checkbox look in the comparison's scenario list
+  &__box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid $r-gray-3;
+    border-radius: 4px;
+    background: $r-white;
+    color: $r-white;
+  }
+
+  &__option[aria-selected="true"] &__box {
+    border-color: $r-primary;
+    background: $r-primary;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 38px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 6px;
+    background: $r-white;
+    color: $r-text;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: $r-gray-1;
+    }
+
+    &:disabled {
+      color: $r-gray-3;
+      cursor: default;
+    }
+
+    &--rich,
+    &--add {
+      align-items: flex-start;
+      height: auto;
+      padding: 10px;
+    }
+
+    &--add {
+      padding: 9px 10px;
+
+      svg {
+        margin-top: 2px;
+        color: $r-primary;
+      }
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: $r-accent-bg;
+    color: $r-primary;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: $r-gray-4;
+    font-size: 14px;
+
+    strong {
+      color: $r-text;
+    }
+  }
+
+  &__item--rich &__text strong {
+    font-size: 15px;
+  }
+
+  &__sep {
+    height: 1px;
+    margin: 4px 0;
+    background: $r-gray-2;
+  }
+}
+
+// ⋮ button
+.r-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: $r-gray-4;
+  cursor: pointer;
+
+  &[aria-expanded="true"] {
+    background: $r-gray-1;
+  }
+}
+
+// ==========================================================================================
+// CONTENT: sections, subsection cards, items
+// ==========================================================================================
+
+.r-content {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  max-width: $r-max-width;
+  margin: 0 auto;
+  padding: 32px $r-side 80px;
+}
+
+.r-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__title {
+    margin: 0;
+    color: $r-text;
+    font-size: 25px;
+    font-weight: 700;
+    scroll-margin-top: 90px;
+  }
+}
+
+// subsection = white card with a title that opens/closes it
+.r-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  background: $r-white;
+  box-shadow: $r-shadow-card;
+  scroll-margin-top: 90px;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 16px;
+  }
+
+  &__title {
+    flex-grow: 1;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 16px 20px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: $r-text;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    .r-chevron {
+      color: $r-gray-4;
+    }
+  }
+
+  // "+ Diagramm": add a hidden or optional chart to this subsection
+  &__add {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px 0 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: $r-primary;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &[aria-expanded="true"] {
+      background: $r-accent-bg;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 20px 20px;
+
+    &--stack {
+      gap: 24px;
+    }
+  }
+
+  &__empty {
+    padding: 20px;
+    border: 1px dashed $r-gray-3;
+    border-radius: 8px;
+    color: $r-gray-4;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  // two charts per row; KPI blocks, diagrams and single charts take the full row
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 40px;
+    row-gap: 32px;
+  }
+}
+
+.r-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &--wide {
+    grid-column: 1 / -1;
+  }
+
+  // light separators: a line above every further row, a line before the right chart of a pair
+  &--sep-top {
+    margin-top: -8px;
+    padding-top: 24px;
+    border-top: 1px solid $r-gray-2;
+  }
+
+  &--sep-left {
+    margin-left: -20px;
+    padding-left: 20px;
+    border-left: 1px solid $r-gray-2;
+  }
+
+  &__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 32px;
+  }
+
+  &__title {
+    margin: 0;
+    color: $r-text;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  &__note {
+    margin: 0;
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+}
+
+// ---------- KPI tiles ----------
+.r-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+
+  &__tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 8px;
+    background: $r-gray-1;
+  }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+
+  &__info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 11px;
+    background: transparent;
+    color: #8696A5;
+    cursor: help;
+
+    &:hover,
+    &:focus-visible {
+      background: $r-gray-2;
+      color: $r-primary-dark;
+    }
+  }
+
+  // definition, shown while the ⓘ button is hovered or focused
+  &__tip {
+    display: none;
+    position: absolute;
+    top: 42px;
+    left: 10px;
+    right: 10px;
+    z-index: 6;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: $r-text;
+    color: $r-white;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  }
+
+  &__info:hover + &__tip,
+  &__info:focus + &__tip {
+    display: block;
+  }
+
+  &__value {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  &__num {
+    color: $r-text;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  &__unit {
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+}
+
+// ---------- "no data" state ----------
+.r-nodata {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
+  padding: 24px;
+  border-radius: 8px;
+  background: $r-gray-1;
+  text-align: center;
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: $r-white;
+    color: #8696A5;
+  }
+
+  &__title {
+    color: $r-text;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  &__text {
+    max-width: 360px;
+    color: $r-gray-4;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  &__link {
+    color: $r-primary;
+    font-size: 14px;
+    font-weight: 700;
+  }
+}
+
+// ---------- legend ----------
+.r-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  color: $r-gray-4;
+  font-size: 14px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__swatch {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+}
+
+// ---------- horizontal bars (stacked) ----------
+.r-hbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr) 150px;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+  }
+
+  &__label {
+    overflow: hidden;
+    color: $r-text;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__track {
+    display: flex;
+    gap: 1px;
+    height: 18px;
+    border-radius: 4px;
+    background: $r-gray-1;
+    overflow: hidden;
+  }
+
+  &__value {
+    color: $r-text;
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  // comparison: one row per scenario, with its letter
+  &--scenarios {
+    gap: 12px;
+  }
+
+  &--scenarios &__row {
+    grid-template-columns: 300px minmax(0, 1fr) 150px;
+  }
+
+  &--scenarios &__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    > span:last-child {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    &.is-ref {
+      font-weight: 700;
+    }
+  }
+
+  &--scenarios &__track {
+    height: 22px;
+  }
+}
+
+// ---------- vertical bars ----------
+.r-vbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__plot {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    height: 200px;
+    padding: 0 8px;
+    border-bottom: 1px solid #D6DEE5;
+  }
+
+  &__col {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    height: 100%;
+  }
+
+  &__value {
+    color: $r-text;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  &__bar {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1px;
+    width: 100%;
+    max-width: 72px;
+    border-radius: 4px 4px 0 0;
+    overflow: hidden;
+  }
+
+  &__labels {
+    display: flex;
+    gap: 24px;
+    padding: 0 8px;
+
+    span {
+      flex: 1 1 0;
+      color: $r-gray-4;
+      font-size: 14px;
+      text-align: center;
+    }
+  }
+}
+
+// ---------- donut ----------
+.r-donut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 32px;
+
+  &__ring {
+    position: relative;
+    flex-shrink: 0;
+    width: 180px;
+    height: 180px;
+  }
+
+  &__center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.25;
+    pointer-events: none;
+
+    span {
+      color: $r-gray-4;
+      font-size: 14px;
+    }
+
+    strong {
+      color: $r-text;
+      font-size: 17px;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex: 1 1 240px;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 240px;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr) auto 64px;
+    align-items: center;
+    gap: 10px;
+    color: $r-text;
+    font-size: 14px;
+
+    strong {
+      text-align: right;
+    }
+  }
+
+  &__value {
+    color: $r-gray-4;
+    white-space: nowrap;
+  }
+}
+
+// ---------- share bar (one bar split in parts) ----------
+.r-share {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__bar {
+    display: flex;
+    gap: 2px;
+    height: 28px;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    font-size: 14px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: $r-text;
+  }
+
+  &__value {
+    color: $r-gray-4;
+  }
+}
+
+// ---------- line / area plots (time series) ----------
+.r-plot {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 6px;
+
+  &__y {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 200px;
+    color: $r-gray-4;
+    font-size: 14px;
+    white-space: nowrap;
+    transform: translateY(-8px);
+  }
+
+  &__area {
+    position: relative;
+    height: 200px;
+    border-bottom: 1px solid #D6DEE5;
+
+    svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &__grid {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed $r-gray-2;
+
+    &--top {
+      top: 0;
+    }
+
+    &--mid {
+      top: 50%;
+    }
+  }
+
+  &__x {
+    display: flex;
+    justify-content: space-between;
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+}
+
+// ---------- energy flows (Sankey) and energy system ----------
+.r-flow {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.r-system {
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: $r-gray-1;
+
+  svg {
+    display: block;
+    width: 100%;
+    max-width: 1000px;
+    height: auto;
+    margin: 0 auto;
+  }
+}
+
+// ---------- "Tabelle anzeigen" ----------
+.r-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid $r-line;
+
+  &__toggle {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: $r-primary;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  &__wrap {
+    border: 1px solid $r-gray-2;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+
+    th,
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid $r-line;
+      text-align: left;
+    }
+
+    thead th {
+      border-bottom-color: $r-gray-2;
+      background: $r-gray-1;
+      color: $r-text;
+      font-weight: 700;
+    }
+
+    tbody th {
+      color: $r-text;
+      font-weight: 700;
+    }
+
+    td {
+      color: $r-gray-4;
+    }
+
+    .is-num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+// ==========================================================================================
+// COMPARISON
+// ==========================================================================================
+
+// scenario letter (A, B, C …)
+.r-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: $r-primary-dark;
+  color: $r-white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.r-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 12px;
+  background: $r-primary;
+  color: $r-white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+// best value: green check in a light green circle
+.r-best {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: $r-good-bg;
+  color: $r-good;
+}
+
+// segmented buttons (trade-off axes, waterfall target)
+.r-segmented {
+  display: flex;
+  border: 1px solid $r-border;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &__btn {
+    height: 36px;
+    padding: 0 14px;
+    border: 0;
+    background: $r-white;
+    color: $r-gray-4;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+
+    & + & {
+      border-left: 1px solid $r-border;
+    }
+
+    &[aria-pressed="true"] {
+      background: $r-primary;
+      color: $r-white;
+    }
+  }
+}
+
+.r-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: $r-accent-bg;
+  color: $r-primary-dark;
+  font-size: 14px;
+  line-height: 20px;
+
+  > svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    margin: -6px -8px -6px auto;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: $r-primary-dark;
+    cursor: pointer;
+  }
+}
+
+// white panel of "Vergleich auf einen Blick" (table, trade-off)
+.r-panel {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  background: $r-white;
+
+  &--message {
+    padding: 20px;
+    color: $r-gray-4;
+    font-size: 15px;
+  }
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 14px;
+  }
+
+  &__title {
+    margin: 0;
+    color: $r-text;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  &__body {
+    padding: 0 20px 20px;
+
+    &--scroll {
+      overflow-x: auto;
+    }
+  }
+}
+
+// ---------- table "Szenarien im Vergleich" ----------
+.r-matrix {
+  border: 1px solid $r-gray-2;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &__row {
+    display: grid;   // columns: inline style from the number of scenarios
+    border-top: 1px solid $r-gray-2;
+
+    &--head {
+      border-top: 0;
+      background: $r-gray-1;
+    }
+
+    &--group {
+      background: $r-row-bg;
+    }
+  }
+
+  &__corner {
+    display: flex;
+    align-items: flex-end;
+    padding: 12px 16px;
+    color: $r-gray-4;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  &__head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px 16px;
+
+    &.is-ref {
+      background: $r-accent-bg;
+    }
+  }
+
+  &__scen {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    color: $r-text;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  &__make-ref {
+    flex-shrink: 0;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid #C9D3DB;
+    border-radius: 13px;
+    background: $r-white;
+    color: $r-primary;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  &__group {
+    grid-column: 1 / -1;
+    padding: 8px 16px;
+    color: $r-gray-4;
+    font-size: 14px;
+    font-weight: 700;
+
+    &--btn {
+      padding: 4px 10px;
+    }
+  }
+
+  &__comps-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 6px;
+    border: 0;
+    background: transparent;
+    color: $r-primary;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px 12px 28px;
+    color: $r-text;
+    font-size: 15px;
+  }
+
+  &__unit {
+    color: $r-gray-4;
+  }
+
+  &__cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 12px 16px;
+
+    &.is-ref {
+      background: $r-ref-bg;
+    }
+
+    &--comps dl {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    &--comps dt {
+      color: $r-gray-4;
+      font-weight: 700;
+    }
+
+    &--comps dd {
+      margin: 0;
+      color: $r-text;
+    }
+  }
+
+  &__value {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-height: 24px;
+  }
+
+  &__num {
+    color: $r-text;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+
+    &.is-best {
+      font-weight: 700;
+    }
+  }
+
+  &__delta {
+    color: $r-gray-4;
+    font-size: 14px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ---------- trade-off scatter (fixed size, scrolls on narrow screens) ----------
+.r-scatter {
+  position: relative;
+  flex-shrink: 0;
+  width: 1140px;
+  height: 424px;
+
+  svg {
+    display: block;
+  }
+
+  &__text {
+    position: absolute;
+    color: $r-gray-4;
+    font-size: 14px;
+    line-height: 18px;
+    white-space: nowrap;
+    pointer-events: none;
+
+    &--quarter {
+      color: #5F6E7A;
+    }
+
+    &--title {
+      color: $r-text;
+      font-weight: 700;
+    }
+
+    &--point {
+      padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.9);
+      color: $r-text;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 22px;
+    }
+  }
+}
+
+// ---------- monthly small multiples ----------
+.r-multiples {
+  display: grid;   // columns: inline style from the number of scenarios
+  gap: 16px;
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid $r-gray-2;
+    border-radius: 8px;
+
+    &.is-ref {
+      border-color: $r-primary;
+    }
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: $r-text;
+    font-size: 14px;
+    font-weight: 700;
+
+    > span:last-child {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  &__plot {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 140px;
+    padding-top: 18px;
+    border-bottom: 1px solid $r-gray-3;
+  }
+
+  &__max {
+    position: absolute;
+    top: -2px;
+    left: 0;
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+
+  &__month {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 1px;
+    height: 100%;
+  }
+
+  &__gas {
+    border-radius: 2px 2px 0 0;
+    background: #5C6670;
+  }
+
+  &__el {
+    background: $r-primary;
+  }
+
+  &__months {
+    display: flex;
+    gap: 3px;
+    color: $r-gray-4;
+    font-size: 14px;
+
+    span {
+      flex: 1 1 0;
+      text-align: center;
+    }
+  }
+
+  &__total {
+    color: $r-text;
+    font-size: 14px;
+  }
+}
+
+// ---------- waterfall ----------
+.r-waterfall {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__from {
+    color: $r-gray-4;
+    font-size: 14px;
+  }
+
+  &__summary {
+    margin: 0;
+    color: $r-text;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  &__plot {
+    display: flex;
+    align-items: stretch;
+    gap: 24px;
+    height: 240px;
+    padding: 0 8px;
+    border-bottom: 1px solid $r-gray-3;
+  }
+
+  &__col {
+    position: relative;
+    flex: 1 1 0;
+  }
+
+  &__bar {
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    min-height: 2px;
+    border-radius: 3px;
+  }
+
+  &__value {
+    position: absolute;
+    left: 0;
+    right: 0;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  &__labels {
+    display: flex;
+    gap: 24px;
+    margin-top: -6px;
+    padding: 0 8px;
+
+    span {
+      flex: 1 1 0;
+      color: $r-text;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .is-total {
+      font-weight: 700;
+    }
+  }
+}
+
+// ---------- cumulative costs (lines; fixed size) ----------
+.r-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-x: auto;
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    color: $r-text;
+    font-size: 14px;
+  }
+
+  &__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__plot {
+    position: relative;
+    flex-shrink: 0;
+    width: 1040px;
+    height: 310px;
+
+    svg {
+      display: block;
+    }
+  }
+
+  &__text {
+    position: absolute;
+    color: $r-gray-4;
+    font-size: 14px;
+    line-height: 18px;
+    white-space: nowrap;
+    pointer-events: none;
+
+    &--y {
+      right: 980px;
+      transform: translateY(-50%);
+    }
+
+    &--x {
+      top: 272px;
+      transform: translateX(-50%);
+    }
+
+    &--end {
+      font-weight: 700;
+      transform: translateY(-50%);
+    }
+
+    &--mark {
+      padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.85);
+      color: $r-text;
+      font-weight: 700;
+      transform: translate(-50%, -50%);
+    }
+  }
+}
+
+// ---------- results that are the same in all scenarios ----------
+.r-same {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: $r-gray-1;
+  color: $r-text;
+  font-size: 14px;
+
+  > svg {
+    color: $r-gray-4;
+  }
+
+  > span {
+    flex: 1 1 300px;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid $r-border;
+    border-radius: 6px;
+    background: $r-white;
+    color: $r-primary-dark;
+    font-weight: 700;
+    text-decoration: none;
+  }
+}
+
+// ---------- prototype note (remove once the comparison view is complete) ----------
+.r-proto {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid $r-warning-border;
+  border-radius: 8px;
+  background: $r-warning-bg;
+  color: $r-warning-text;
+
+  > svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    font-size: 16px;
+  }
+
+  span {
+    font-size: 15px;
+    line-height: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .r-chevron {
+    transition: none;
+  }
+}
